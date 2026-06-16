@@ -6,7 +6,12 @@ import numpy as np
 import cv2
 from game import start_game, move_player
 from game import update
+from cutscene import show_cutscene
+from pygame import mixer
 
+mixer.init()
+mixer.music.load("Fight in the Dungeon.mp3")
+mixer.music.play(loops=-1)
 TILE_PATH = os.path.split(__file__)[0] + '/tiles'
 
 # title of the game window
