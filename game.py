@@ -6,7 +6,8 @@ from typing import Callable
 from moves import Move
 import random  # add this on top of game.py
 from typing import Literal
-from effects import Effect, RandomBlur
+from effects import Effect, RandomBlur,Explosion
+import time
 
 Direction = Literal["up", "down", "left", "right"]
 Position = tuple[int, int]
@@ -39,6 +40,7 @@ class DungeonGame(BaseModel):
     coins: int = 0
     health: int = 3
     level_number: int = 0
+
     
 class Scary_Monsters(BaseModel):
     x: int
@@ -65,7 +67,6 @@ class switch_wall(BaseModel):
     x: int 
     y: int
     move : Move = None
-
 
 
 def parse_level(level):
@@ -104,7 +105,7 @@ def get_skeleton_speed(direction:Direction):
 
 def move_fireball(game, fireball):
     new_x, new_y = get_next_position(fireball.x, fireball.y, fireball.direction)
-    if game.current_level.level[new_y][new_x] in ".$k":  # flies over coins and keys
+    if game.current_level.level[new_y][new_x] in ".$ke":  # flies over coins and keys
         fireball.x = new_x
         fireball.y = new_y
         check_collision(game,fireball)
@@ -164,6 +165,7 @@ def take_damage(game):
     game.health -= 1
     print("damage")
     if game.health <= 0:
+        game.effects.append(Explosion(x=game.x, y=game.y, countdown=200))
         game.status = "game over"
 
 def recover(game):
@@ -173,11 +175,19 @@ def move_player(game: DungeonGame, direction: str) -> None:
     """Things that happen when the player walks on stuff"""
 
     new_x, new_y = get_next_position(game.x, game.y, direction)
-
+    print(game.x, game.y)
     if game.current_level.level[new_y][new_x] == "$":
         game.current_level.level[new_y][new_x] = "."
         game.coins += 1
     
+    if game.current_level.level[new_y][new_x] == "c":
+        game.current_level.level[new_y][new_x] = "."
+        game.coins += 10
+    
+    if game.current_level.level[new_y][new_x] == "e":
+        game.current_level.level[new_y][new_x] = "."
+        game.coins -= 5
+
     if game.current_level.level[new_y][new_x] == "k" :
         game.current_level.level[new_y][new_x] = "."
         game.items.append("key")
@@ -198,6 +208,8 @@ def move_player(game: DungeonGame, direction: str) -> None:
         game.x = new_x
         game.y = new_y
     
+    if game.current_level.level[new_y][new_x] == "*" :
+        game.current_level.level[new_y][new_x] = "."
     #check_collision(game)
 
     if game.current_level.level[new_y][new_x] == "x":
@@ -208,6 +220,15 @@ def move_player(game: DungeonGame, direction: str) -> None:
     else:
         # no more levels left
         game.status = "finished"
+    
+    if game.current_level.level[new_y][new_x] == "u":
+        game.level_number -= 1
+        if game.level_number > len(LEVELS):
+        # move to next level
+            game.current_level = LEVELS[game.level_number]
+        elif game.level_number<0:
+        # no more levels left
+            game.status = "finished"
     
     check_teleporters(game)
 
@@ -244,6 +265,7 @@ def check_collision(game,f):
         if f.x == game.x and f.y == game.y:
             take_damage(game)
             
+            
 
 def update(game):
     for f in game.current_level.fireballs:
@@ -263,23 +285,22 @@ def handle_secret_doors(game:DungeonGame, new_x: int, new_y: int):
     print("hi")
 LEVEL_ONE = Level(
     level=parse_level([
-    "##########",        
-    "#hk.$.tk.#",
-    "#..t..D..#",
-    "#........#",
-    "#.g.|D|..#",
-    "#.s.|$|..#",
-    "#...|||..#",
-    "x#......t#",
-    "#.....t..#",
-    "##########",
+    "###########",        
+    "#hk.$.tk..#",
+    "#..t..D...#",
+    "#..e......#",
+    "#.g.|D|...#",
+    "#.s.|c|...#",
+    "#...|||...#",
+    "x#......t.#",
+    "#.....t..u#",
+    "###########",
     ]),
     
     teleporters=[Teleporter(x=1, y=2, target_x=1, target_y=8),],
     fireballs=[Fireball(x=7, y=3, direction = "left"),
             Fireball(x=7, y=7, direction = "left"),],
     skeletons=[Skeleton(x=2, y=8, direction = "right")],
-    bats=[Bat(x=2, y=4, direction = "right")],
     switches=[switch_wall(x=4, y=4)]
 )
 LEVEL_TWO = Level(
@@ -290,13 +311,33 @@ LEVEL_TWO = Level(
     "#........#",
     "#........#",
     "#........#",
-    "#........#",
+    "#u.......#",
     "#........#",
     "#........#",
     "##########",
     ]),
     
-    teleporters=[Teleporter(x=1, y=2, target_x=1, target_y=8),],
+    teleporters=[Teleporter(x=3, y=4, target_x=6, target_y=6),],
+    fireballs=[Fireball(x=1, y=1, direction = "left"),
+            Fireball(x=4, y=7, direction = "up"),],
+    skeletons=[Skeleton(x=5, y=8, direction = "right"),
+               Skeleton(x=8, y=1, direction = "right")],
+    bats=[Bat(x=2, y=4, direction = "up")],
+)
+LEVEL_THREE = Level(
+    level=parse_level([
+    "##########",        
+    "#.e....x.#",
+    "#......e.#",
+    "#..$$$...#",
+    "#..$$$...#",
+    "#..$$$...#",
+    "#.e......#",
+    "#......e.#",
+    "#x.......#",
+    "##########",
+    ]),
+    
     fireballs=[Fireball(x=1, y=1, direction = "left"),
             Fireball(x=4, y=7, direction = "up"),],
     skeletons=[Skeleton(x=5, y=8, direction = "right"),
@@ -313,5 +354,5 @@ def start_game():
     level_number = 0
 )
         
-LEVELS = [LEVEL_ONE, LEVEL_TWO, ...]
+LEVELS = [LEVEL_ONE, LEVEL_TWO, LEVEL_THREE]
 

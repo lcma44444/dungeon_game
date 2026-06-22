@@ -6,13 +6,15 @@ import numpy as np
 import cv2
 from game import start_game, move_player
 from game import update
-from cutscene import show_cutscene
+from cutscene import show_cutscene, show_victory
 from pygame import mixer
 
 mixer.init()
 mixer.music.load("Fight in the Dungeon.mp3")
 mixer.music.play(loops=-1)
 TILE_PATH = os.path.split(__file__)[0] + '/tiles'
+
+
 
 # title of the game window
 GAME_TITLE = "Dungeon Explorer"
@@ -79,11 +81,19 @@ def clean_moves(game, moves):
 def is_player_moving(moves):
     return any([m for m in moves if m.tile == "player"])
 
+def draw_explosion(frame, explosion, images):
+    framex = explosion.frame % 4
+    framey = explosion.frame // 4
+    tile = images["explosion"][framey * TILE_SIZE:(framey + 1) * TILE_SIZE, framex * TILE_SIZE:(framex + 1) * TILE_SIZE]
+    draw_tile(frame, x=explosion.x, y=explosion.y, image=tile)
+    ...
+    # increase the frame here and set the explosion to complete if necessary
+    # also handle delays here
 
 def draw(game, images, moves):
     # initialize screen
     frame = np.zeros((SCREEN_SIZE_Y, SCREEN_SIZE_X, 3), np.uint8)
-
+    
     SYMBOLS = {
     ".": "floor",
     "#": "wall",
@@ -100,7 +110,11 @@ def draw(game, images, moves):
     "h": "heart",
     "s": "black_switch",
     "b": "bat",
-    "g": "green_switch"
+    "g": "green_switch",
+    "c": "chest",
+    "u": "stairs_up",
+    "e": "eye",
+    "explosion": read_image("tiles/explosion_pixelfied.png")
 
     }
 
@@ -179,21 +193,32 @@ def handle_keyboard(game):
     if key == "q":
         game.status = "exited"
     return MOVES.get(key)
-
+def clean_explosions(game):
+    """updates each explosion in the game"""
+    result = []
+    ...
+    game.explosions = result
 
 def main():
     images = read_images()
+    show_cutscene()
     game = start_game()
     queued_move = None
     moves = []
-    while game.status == "running":
+    counter = 200
+    while counter>0:
         draw(game, images, moves)
         update(game)
         moves = clean_moves(game, moves)
         queued_move = handle_keyboard(game)
         if not is_player_moving(moves) and queued_move:
             move_player(game, queued_move)
-
+        
+        if game.status != "running":
+            counter-=1
+        
+    if game.status == "finished":
+        show_victory()
 
     cv2.destroyAllWindows()
 
