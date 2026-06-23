@@ -50,7 +50,7 @@ class Explosion(Effect):
     frame: int = 0
     
     def draw(self, frame):
-        tile = read_image("tiles/explosion_pixelfied1.png")
+        tile = read_image(os.path.split(__file__)[0] +"/tiles/explosion_pixelfied1.png")
         random_tile = np.random.randint(0, 255, size=(TILE_SIZE, TILE_SIZE, 3), dtype=np.uint8)
         frame[self.y * TILE_SIZE: self.y * TILE_SIZE + TILE_SIZE,
             self.x * TILE_SIZE: self.x * TILE_SIZE + TILE_SIZE] = tile

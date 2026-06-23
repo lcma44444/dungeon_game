@@ -10,7 +10,7 @@ from cutscene import show_cutscene, show_victory
 from pygame import mixer
 
 mixer.init()
-mixer.music.load("Fight in the Dungeon.mp3")
+mixer.music.load( os.path.split(__file__)[0] +"\Fight in the Dungeon.mp3")
 mixer.music.play(loops=-1)
 TILE_PATH = os.path.split(__file__)[0] + '/tiles'
 
@@ -106,7 +106,6 @@ def draw(game, images, moves):
     "u": "stairs_up",
     "e": "eye",
     "r": "red_pix_switch",
-    "explosion": read_image("tiles/explosion_pixelfied.png")
 
     }
 
@@ -152,6 +151,8 @@ def draw(game, images, moves):
 
     # display complete image
     cv2.imshow(GAME_TITLE, frame)
+
+
 
 def update_effects(game):
     new_effects = []

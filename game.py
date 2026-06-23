@@ -368,11 +368,13 @@ LEVEL_TWO = Level(
     barts=[Bart(x=2, y=4, direction = "up"),
           Bart(x=4, y=2, direction = "down"),
           Bart(x=6, y=8, direction = "up"),],
-    eyes=[Evil_Eye(x=7, y=2),
+    eyes=[Evil_Eye(x=2, y=5),
           Evil_Eye(x=3, y=1),
-          Evil_Eye(x=2, y=5),
-          Evil_Eye(x=4, y=6),
-          Evil_Eye(x=5, y=2),]
+          Evil_Eye(x=3, y=4),
+          Evil_Eye(x=4, y=5),
+          Evil_Eye(x=5, y=2),
+          Evil_Eye(x=7, y=2),
+          Evil_Eye(x=7, y=4),]
 )
 LEVEL_THREE = Level(
     level=parse_level([
@@ -402,15 +404,16 @@ LEVEL_FOUR = Level(
     "#........#",
     "#........#",
     "#..$$$...#",
-    "#rr......#",
-    "#rrr.....#",
-    "#rr......#",
+    "#........#",
+    "#r.......#",
+    "#.r......#",
     "##########",
     ]),
     bats=[Bat(x=2, y=4, direction = "up"),
           Bat(x=5, y=6, direction = "left")],
     switches=[switch_wall(x=6, y=2),
-              switch_wall(x=7, y=2),],
+              switch_wall(x=7, y=2),
+              switch_wall(x=8, y=2)],
     eyes=[Evil_Eye(x=3, y=3),
           Evil_Eye(x=2, y=5),
           Evil_Eye(x=4, y=6),]

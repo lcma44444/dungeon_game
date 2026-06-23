@@ -1,6 +1,7 @@
 import cv2
+import os
 def show_cutscene():
-    img = cv2.imread("tiles/title.png")
+    img = cv2.imread(os.path.split(__file__)[0] +"/tiles/title.png")
     img[-100:] = 0  # last 100 pixel rows are black
     img = cv2.putText(
     img,
@@ -25,7 +26,7 @@ def show_cutscene():
     cv2.destroyAllWindows()
 
 def show_victory():
-    img = cv2.imread("tiles/victory_scene1.png")
+    img = cv2.imread(os.path.split(__file__)[0] +"/tiles/victory_scene1.png")
     img[-100:] = 0  # last 100 pixel rows are black
     img = cv2.putText(
     img,
