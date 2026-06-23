@@ -81,15 +81,6 @@ def clean_moves(game, moves):
 def is_player_moving(moves):
     return any([m for m in moves if m.tile == "player"])
 
-def draw_explosion(frame, explosion, images):
-    framex = explosion.frame % 4
-    framey = explosion.frame // 4
-    tile = images["explosion"][framey * TILE_SIZE:(framey + 1) * TILE_SIZE, framex * TILE_SIZE:(framex + 1) * TILE_SIZE]
-    draw_tile(frame, x=explosion.x, y=explosion.y, image=tile)
-    ...
-    # increase the frame here and set the explosion to complete if necessary
-    # also handle delays here
-
 def draw(game, images, moves):
     # initialize screen
     frame = np.zeros((SCREEN_SIZE_Y, SCREEN_SIZE_X, 3), np.uint8)
@@ -114,6 +105,7 @@ def draw(game, images, moves):
     "c": "chest",
     "u": "stairs_up",
     "e": "eye",
+    "r": "red_pix_switch",
     "explosion": read_image("tiles/explosion_pixelfied.png")
 
     }
@@ -122,28 +114,10 @@ def draw(game, images, moves):
     for y, row in enumerate(game.current_level.level):
         for x, tile in enumerate(row):
             draw_tile(frame, x=x, y=y, image=images[SYMBOLS[tile]])
-            # if tile == "#":
-            #     draw_tile(frame, x=x, y=y, image=images["wall"])
-            # if tile == "w":
-            #     draw_tile(frame, x=x, y=y, image=images["fountain"])
-            # if tile == "x":
-            #     draw_tile(frame, x=x, y=y, image=images["stairs_down"])
-            # if tile == "$":
-            #     draw_tile(frame, x=x, y=y, image=images["coin"])
-            # if tile == "k":
-            #     draw_tile(frame, x=x, y=y, image=images["key"])
-    # draw teleporters
+    
     for t in game.current_level.teleporters:
         draw_tile(frame, x=t.x, y=t.y, image=images["teleporter"])
     
-    # for f in game.fireballs:
-        #draw_tile(frame, x=f.x, y=f.y, image=images["fireball"])
-
-    #for s in game.skeletons:
-        #draw_tile(frame, x=s.x, y=s.y, image=images["skeleton"])
-    #for s in game.bats:
-        #draw_tile(frame, x=s.x, y=s.y, image=images["bat"])
-    # draw player
     while game.moves:
         moves.append(game.moves.pop())
     
@@ -155,7 +129,7 @@ def draw(game, images, moves):
         draw_move(frame=frame, move=m, images=images)
     
     for i in range(game.health):
-        draw_tile(frame, xbase=645, ybase=130, x=i, y=0, image=images["heart"])
+        draw_tile(frame, xbase=700, ybase=130, x=i, y=0, image=images["heart"])
 
     for i, item in enumerate(game.items):
         y = i // 2  # floor division: rounded down
@@ -181,12 +155,12 @@ def draw(game, images, moves):
 
 def update_effects(game):
     new_effects = []
-
-    # add a loop that decreases the countdown for all effects
-    # and only collect those where it is greater than zero
-
+    for e in game.effects:
+        e.countdown -= 1
+        if e.countdown >= 0:
+            new_effects.append(e)
     game.effects = new_effects
-
+#sound=mixer.sound("soundname")
 def handle_keyboard(game):
     """keys are mapped to move commands"""
     key = chr(cv2.waitKey(1) & 0xFF)
@@ -208,6 +182,7 @@ def main():
     counter = 200
     while counter>0:
         draw(game, images, moves)
+        update_effects(game)
         update(game)
         moves = clean_moves(game, moves)
         queued_move = handle_keyboard(game)
@@ -217,7 +192,7 @@ def main():
         if game.status != "running":
             counter-=1
         
-    if game.status == "finished":
+    if game.status == "finished" and game.coins >0:
         show_victory()
 
     cv2.destroyAllWindows()
