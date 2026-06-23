@@ -28,6 +28,7 @@ class Level(BaseModel):
     fireballs: list[Fireball] = []
     skeletons: list[Skeleton] = []
     bats: list[Bat] = []
+    barts: list[Bart] = []
     eyes: list[Evil_Eye] = []
 
 class DungeonGame(BaseModel):
@@ -65,6 +66,9 @@ class Skeleton(Scary_Monsters):
     pass
 
 class Bat(Scary_Monsters):
+    pass
+
+class Bart(Scary_Monsters):
     pass
 
 class switch_wall(BaseModel):
@@ -133,6 +137,32 @@ def move_fireball(game, fireball):
     )
     game.moves.append(fireball.move)
     
+def move_bart(game, bart):
+    new_x, new_y = get_next_position(bart.x, bart.y, bart.direction)
+    if game.current_level.level[new_y][new_x] not in "#xu":  
+        bart.x = new_x
+        bart.y = new_y
+        check_collision(game,bart)
+    elif bart.direction == "right":
+        bart.direction = "left"
+        
+    elif bart.direction == "left":
+        bart.direction = "right"
+        
+    elif bart.direction == "up":
+        bart.direction = "down"
+        
+    elif bart.direction == "down":
+        bart.direction = "up"
+        
+    speed_x, speed_y = get_speed(bart.direction)
+    bart.move = Move(
+        tile="bart",
+        from_x=bart.x, from_y=bart.y,
+        speed_x = speed_x , speed_y = speed_y
+    )
+    game.moves.append(bart.move)
+
 def move_skeleton(game, skeleton):  # called by update!
     skeleton.direction = random.choice(["up", "down", "left", "right"])
     new_x, new_y = get_next_position(skeleton.x, skeleton.y, skeleton.direction)
@@ -260,8 +290,8 @@ def move_player(game: DungeonGame, direction: str) -> None:
         game.current_level.level[new_y][new_x] = "."
         game.effects.append(FadeIn(x=8, y=1, countdown=500))
 
-    if game.x == 1 and game.y == 1 and game.current_level.level[7][1] == "#":
-        game.current_level.level[7][1] = "."  # wall in row 4 column 3
+    if game.x == 1 and game.y == 1 and game.current_level.level[8][1] == "#":
+        game.current_level.level[8][1] = "."  # wall in row 4 column 3
         move = Move(tile="wall",
                 from_x=1, from_y=7,
                 speed_x = 0, speed_y = 2
@@ -293,6 +323,10 @@ def update(game):
     for s in game.current_level.bats:
         if s.move is None or s.move.complete:
             move_bat(game, s)
+
+    for b in game.current_level.barts:
+        if b.move is None or b.move.complete:
+            move_bart(game, b)
         
 
 def handle_secret_doors(game:DungeonGame, new_x: int, new_y: int):
@@ -306,9 +340,9 @@ LEVEL_ONE = Level(
     "#.s.|D|...#",
     "#...|h|...#",
     "#...|||...#",
-    "x#......t.#",
-    "#.....t..u#",
-    "###########",
+    "#.......t.#",
+    "##....t..u#",
+    "#x#########",
     ]),
     
     teleporters=[Teleporter(x=1, y=2, target_x=1, target_y=8),],
@@ -323,25 +357,22 @@ LEVEL_TWO = Level(
     "#......x.#",
     "#........#",
     "#........#",
-    "#...c....#",
+    "#c.......#",
+    "#.|||||||#",
     "#........#",
-    "#u.......#",
-    "#........#",
+    "#|||||||.#",
     "#........#",
     "##########",
     ]),
     
-    teleporters=[Teleporter(x=3, y=4, target_x=6, target_y=6),],
-    fireballs=[Fireball(x=1, y=1, direction = "left"),
-            Fireball(x=4, y=7, direction = "up"),],
-    skeletons=[Skeleton(x=5, y=8, direction = "right"),
-               Skeleton(x=8, y=1, direction = "right")],
-    bats=[Bat(x=2, y=4, direction = "up")],
+    barts=[Bart(x=2, y=4, direction = "up"),
+          Bart(x=4, y=2, direction = "down"),
+          Bart(x=6, y=8, direction = "up"),],
     eyes=[Evil_Eye(x=7, y=2),
-          Evil_Eye(x=3, y=3),
+          Evil_Eye(x=3, y=1),
           Evil_Eye(x=2, y=5),
           Evil_Eye(x=4, y=6),
-          Evil_Eye(x=5, y=7),]
+          Evil_Eye(x=5, y=2),]
 )
 LEVEL_THREE = Level(
     level=parse_level([
@@ -353,8 +384,8 @@ LEVEL_THREE = Level(
     "#..$$$...#",
     "#.e......#",
     "#......e.#",
-    "#x.......#",
-    "##########",
+    "#........#",
+    "#x########",
     ]),
     
     fireballs=[Fireball(x=1, y=1, direction = "left"),
@@ -371,9 +402,9 @@ LEVEL_FOUR = Level(
     "#........#",
     "#........#",
     "#..$$$...#",
-    "#........#",
-    "#r.......#",
-    "#.r......#",
+    "#rr......#",
+    "#rrr.....#",
+    "#rr......#",
     "##########",
     ]),
     bats=[Bat(x=2, y=4, direction = "up"),
