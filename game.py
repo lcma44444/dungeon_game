@@ -6,7 +6,7 @@ from typing import Callable
 from moves import Move
 import random  # add this on top of game.py
 from typing import Literal
-from effects import Effect, RandomBlur,Explosion
+from effects import Effect, RandomBlur,Explosion, FadeIn
 import time
 
 Direction = Literal["up", "down", "left", "right"]
@@ -28,6 +28,7 @@ class Level(BaseModel):
     fireballs: list[Fireball] = []
     skeletons: list[Skeleton] = []
     bats: list[Bat] = []
+    eyes: list[Evil_Eye] = []
 
 class DungeonGame(BaseModel):
     current_level: Level
@@ -41,6 +42,9 @@ class DungeonGame(BaseModel):
     health: int = 3
     level_number: int = 0
 
+class Evil_Eye(BaseModel):
+    x: int
+    y: int
     
 class Scary_Monsters(BaseModel):
     x: int
@@ -86,13 +90,13 @@ def get_next_position(x: int, y: int, direction: Direction) -> Position:
         return (x + 1, y)
 def get_speed(direction:Direction):
     if direction == "left":
-        return -5,0
+        return -3,0
     elif direction == "right":
-        return 5,0
+        return 3,0
     elif direction == "up":
-        return 0,-5
+        return 0,-3
     elif direction == "down":
-        return 0, 5
+        return 0, 3
 def get_skeleton_speed(direction:Direction):
     if direction == "left":
         return -1,0
@@ -183,9 +187,13 @@ def move_player(game: DungeonGame, direction: str) -> None:
     if game.current_level.level[new_y][new_x] == "c":
         game.current_level.level[new_y][new_x] = "."
         game.coins += 10
+        for s in game.current_level.eyes:
+            game.current_level.level[s.y][s.x] = "e"
+            game.effects.append(FadeIn(x=s.x, y=s.y, countdown=250))
     
     if game.current_level.level[new_y][new_x] == "e":
         game.current_level.level[new_y][new_x] = "."
+        game.effects.append(FadeIn(x=8, y=1, countdown=500))
         game.coins -= 5
 
     if game.current_level.level[new_y][new_x] == "k" :
@@ -242,9 +250,15 @@ def move_player(game: DungeonGame, direction: str) -> None:
                 ) 
         game.moves.append(move)
     
+    if game.current_level.level[new_y][new_x] == "r" :
+        game.current_level.level[new_y][new_x] = "."
+        for s in game.current_level.eyes:
+            game.current_level.level[s.y][s.x] = "e"
+            game.effects.append(FadeIn(x=s.x, y=s.y, countdown=250))
+
     if game.current_level.level[new_y][new_x] == "g" :
         game.current_level.level[new_y][new_x] = "."
-        game.effects.append(RandomBlur(x=8, y=1, countdown=500))
+        game.effects.append(FadeIn(x=8, y=1, countdown=500))
 
     if game.x == 1 and game.y == 1 and game.current_level.level[7][1] == "#":
         game.current_level.level[7][1] = "."  # wall in row 4 column 3
@@ -286,11 +300,11 @@ def handle_secret_doors(game:DungeonGame, new_x: int, new_y: int):
 LEVEL_ONE = Level(
     level=parse_level([
     "###########",        
-    "#hk.$.tk..#",
-    "#..t..D...#",
-    "#..e......#",
-    "#.g.|D|...#",
-    "#.s.|c|...#",
+    "#$k.$.t...#",
+    "#..t......#",
+    "#.........#",
+    "#.s.|D|...#",
+    "#...|h|...#",
     "#...|||...#",
     "x#......t.#",
     "#.....t..u#",
@@ -298,10 +312,10 @@ LEVEL_ONE = Level(
     ]),
     
     teleporters=[Teleporter(x=1, y=2, target_x=1, target_y=8),],
-    fireballs=[Fireball(x=7, y=3, direction = "left"),
-            Fireball(x=7, y=7, direction = "left"),],
-    skeletons=[Skeleton(x=2, y=8, direction = "right")],
-    switches=[switch_wall(x=4, y=4)]
+    switches=[switch_wall(x=4, y=4),
+              switch_wall(x=4, y=5)],
+    fireballs=[Fireball(x=1, y=7, direction = "left"),]
+    
 )
 LEVEL_TWO = Level(
     level=parse_level([
@@ -309,7 +323,7 @@ LEVEL_TWO = Level(
     "#......x.#",
     "#........#",
     "#........#",
-    "#........#",
+    "#...c....#",
     "#........#",
     "#u.......#",
     "#........#",
@@ -323,11 +337,16 @@ LEVEL_TWO = Level(
     skeletons=[Skeleton(x=5, y=8, direction = "right"),
                Skeleton(x=8, y=1, direction = "right")],
     bats=[Bat(x=2, y=4, direction = "up")],
+    eyes=[Evil_Eye(x=7, y=2),
+          Evil_Eye(x=3, y=3),
+          Evil_Eye(x=2, y=5),
+          Evil_Eye(x=4, y=6),
+          Evil_Eye(x=5, y=7),]
 )
 LEVEL_THREE = Level(
     level=parse_level([
     "##########",        
-    "#.e....x.#",
+    "#.e......#",
     "#......e.#",
     "#..$$$...#",
     "#..$$$...#",
@@ -341,8 +360,31 @@ LEVEL_THREE = Level(
     fireballs=[Fireball(x=1, y=1, direction = "left"),
             Fireball(x=4, y=7, direction = "up"),],
     skeletons=[Skeleton(x=5, y=8, direction = "right"),
-               Skeleton(x=8, y=1, direction = "right")],
+               Skeleton(x=8, y=5, direction = "right")],
     bats=[Bat(x=2, y=4, direction = "up")],
+)
+LEVEL_FOUR = Level(
+    level=parse_level([
+    "##########",        
+    "#s....|x|#",
+    "#.....|||#",
+    "#........#",
+    "#........#",
+    "#..$$$...#",
+    "#........#",
+    "#r.......#",
+    "#.r......#",
+    "##########",
+    ]),
+    bats=[Bat(x=2, y=4, direction = "up"),
+          Bat(x=5, y=6, direction = "left")],
+    switches=[switch_wall(x=6, y=2),
+              switch_wall(x=7, y=2),],
+    eyes=[Evil_Eye(x=3, y=3),
+          Evil_Eye(x=2, y=5),
+          Evil_Eye(x=4, y=6),]
+    
+    
 )
 def start_game():
     
@@ -354,5 +396,5 @@ def start_game():
     level_number = 0
 )
         
-LEVELS = [LEVEL_ONE, LEVEL_TWO, LEVEL_THREE]
+LEVELS = [LEVEL_ONE, LEVEL_TWO, LEVEL_THREE, LEVEL_FOUR]
 
