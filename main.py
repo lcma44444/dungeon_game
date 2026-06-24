@@ -133,7 +133,7 @@ def draw(game, images, moves):
     for i, item in enumerate(game.items):
         y = i // 2  # floor division: rounded down
         x = i % 2   # modulo: remainder of an integer division
-        draw_tile(frame, xbase=645, ybase=200, x=x, y=y, image=images[item])
+        draw_tile(frame, xbase=700, ybase=200, x=x, y=y, image=images[item])
 
     draw_tile(frame, x=11, y=1, image=images["coin"])
     cv2.putText(frame,
